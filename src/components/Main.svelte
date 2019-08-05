@@ -69,108 +69,107 @@
       ...new Set(shape.cells.map(e => parseInt(e / board.width)))
     ];
 
-    const tetrisRowCount = []
+    // const tetrisRowCount = []
 
-    rowsToCheck.forEach(row => {
-      const obj = {
-        row,
-        count: 0,
-        shapes:[]
-      }
-      tetrisRowCount[row] = obj
-    })
+    // rowsToCheck.forEach(row => {
+    //   const obj = {
+    //     row,
+    //     count: 0,
+    //     shapes:[]
+    //   }
+    //   tetrisRowCount[row] = obj
+    // })
 
-    //go through each playshape
-    playShapes.forEach(shape => {
-      //go through each cell
-      shape.cells.forEach(cell =>{
-        const row = parseInt(cell / board.width)
-        if(rowsToCheck.includes(row)){
-           tetrisRowCount[row].count++
-           tetrisRowCount[row].shapes.push(shape)
-        } 
-      })
-    })
+    // //go through each playshape
+    // playShapes.forEach(shape => {
+    //   //go through each cell
+    //   shape.cells.forEach(cell =>{
+    //     const row = parseInt(cell / board.width)
+    //     if(rowsToCheck.includes(row)){
+    //        tetrisRowCount[row].count++
+    //        tetrisRowCount[row].shapes.push(shape)
+    //     } 
+    //   })
+    // })
 
-    console.log('tetrisRowCount',tetrisRowCount)
+    // console.log('tetrisRowCount',tetrisRowCount)
 
-    const tetrisRowFilter = tetrisRowCount.filter(obj => obj.count === 10)
+    // const tetrisRowFilter = tetrisRowCount.filter(obj => obj.count === 10)
 
    
-    console.log('tetrisRowFilter',tetrisRowFilter)
+    // console.log('tetrisRowFilter',tetrisRowFilter)
 
-    tetrisRowFilter.forEach(obj => {
-      const check = obj.row
-      obj.shapes.forEach(shape => {
-        const cells = shape.cells.reduce((acc, cell, cellIndex) => {
-          const cellRow = parseInt(cell / board.width);
-            // console.log(i++)
-            //If we are checking this row
-            if (check === cellRow) {
-              //Inc counter dont add to acc
-              // count++;
-            }else{
-              //Add to acc and move one row down
-              // const thing = cellRow < check ? cell + board.width : cell
-              acc.push(cell);
-              // newStaticPieces.push(thing);
-            }
-            return acc;
-        },[])
-        console.log([...shape.cells])
-        shape.cells = cells
-        console.log([...shape.cells])
-      })
+    // tetrisRowFilter.forEach(obj => {
+    //   const check = obj.row
+    //   obj.shapes.forEach(shape => {
+    //     const cells = shape.cells.reduce((acc, cell, cellIndex) => {
+    //       const cellRow = parseInt(cell / board.width);
+    //         // console.log(i++)
+    //         //If we are checking this row
+    //         if (check === cellRow) {
+    //           //Inc counter dont add to acc
+    //           // count++;
+    //         }else{
+    //           //Add to acc and move one row down
+    //           // const thing = cellRow < check ? cell + board.width : cell
+    //           acc.push(cell);
+    //           // newStaticPieces.push(thing);
+    //         }
+    //         return acc;
+    //     },[])
+    //     console.log([...shape.cells])
+    //     shape.cells = cells
+    //     console.log([...shape.cells])
+    //   })
 
-    })
+    // })
 
-     playShapes.forEach((shape,i) => {
-       if(i===0) return
-       console.log('shape.cells', shape.cells)
-      shape.cells = shape.cells.map(e => {
-        const len = tetrisRowFilter.length || 0
-        console.log('len',len, e , e+ (board.width * len))
-         return e+(board.width * len)
-      })
-     })
+    //  playShapes.forEach((shape,i) => {
+    //    if(i===0) return
+    //    console.log('shape.cells', shape.cells)
+    //   shape.cells = shape.cells.map(e => {
+    //     const len = tetrisRowFilter.length || 0
+    //     console.log('len',len, e , e+ (board.width * len))
+    //      return e+(board.width * len)
+    //   })
+    //  })
     //if cell is in check add cell to list
 
     //go through lists if 10 cells 
 
-
-
-    // rowsToCheck.forEach(check => {
-    //   let count = 0;
-    //   const newStaticPieces = [];
-    //   //Create new potential playShapes
-    //   const newPlayShapes = playShapes.reduce((acc, shape, shapeIndex) => {
-    //     //For each shape in play shapes go thorough its cells
-    //     const cells = shape.cells.reduce((acc, e, cellIndex) => {
-    //       // Work out which row this cell is in
-    //       const cellRow = parseInt(e / board.width);
-    //       // console.log(i++)
-    //       //If we are checking this row
-    //       if (check === cellRow) {
-    //         //Inc counter dont add to acc
-    //         count++;
-    //       }else{
-    //         //Add to acc and move one row down
-    //         const thing = cellRow < check ? e + board.width : e
-    //         acc.push(thing);
-    //         newStaticPieces.push(thing);
-    //       }
-    //       return acc;
-    //     }, []);
-    //     if(cells.length === 0)return acc;
-    //     return [...acc, { ...shape, cells }];
-    //   }, []);
-    //   //If we have found 10 cells on this row remove it
-    //   if (count === 10) {
-    //     playShapes = newPlayShapes;
-    //     staticPieces = newStaticPieces;
-    //     score += 10;
-    //   }
-    // });
+    rowsToCheck.forEach(check => {
+      let count = 0;
+      const newStaticPieces = [];
+      //Create new potential playShapes
+      const newPlayShapes = playShapes.reduce((acc, shape, shapeIndex) => {
+        //For each shape in play shapes go thorough its cells
+        const cells = shape.cells.reduce((acc, e, cellIndex) => {
+          // Work out which row this cell is in
+          const cellRow = parseInt(e / board.width);
+          // console.log(i++)
+          //If we are checking this row
+          if (check === cellRow) {
+            //Inc counter dont add to acc
+            count++;
+          }else{
+            //Add to acc and move one row down
+            const thing = cellRow < check ? e + board.width : e
+            acc.push(thing);
+            newStaticPieces.push(thing);
+          }
+          return acc;
+        }, []);
+        if(cells.length === 0)return acc;
+        return [...acc, { ...shape, cells }];
+      }, []);
+      //If we have found 10 cells on this row remove it
+      if (count === 10) {
+        playShapes = newPlayShapes;
+        staticPieces = newStaticPieces;
+        score += 10;
+      }
+    });
+    
     // rowsToCheck.forEach(check => {
     //   let count = 0;
     //   const newStaticPieces = [];
