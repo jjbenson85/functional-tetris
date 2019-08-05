@@ -1,6 +1,4 @@
 <script>
-  //   import _ from "lodash";
-
   import {
     width,
     height,
@@ -14,6 +12,12 @@
   import {
    shapes
   } from "../shapes";
+
+  /***
+   * 
+   * CONSTANTS
+   * 
+   * ***/
   const rotLookup = {
     32: CLOCK
   };
@@ -23,120 +27,52 @@
     37: LEFT,
     39: RIGHT
   };
-  let globalID;
-  let board = {
+  const board = {
     width,
     height,
     cells: width * height
   };
-
-  let frameCounter = 0;
   const START_SPEED = 10;
-  let speed = START_SPEED;
-  let gameOver = true;
-  let score = 0;
+  const moveSet = new Set([]) //Stores all current key presses
   const gridArr = new Array(board.cells)
     .fill()
     .map((e, i) =>
       i % board.width < 3 || i % board.width > 12 ? "hidden" : "black"
     );
-  let outputArr = gridArr;
 
-  let staticPieces = [];
-  let shapeDisplay = [];
+  /***
+   * 
+   * Variables
+   * 
+   ***/
+
+  let globalID; //callback timer id
+  let frameCounter = 0; //timer counter
+
+  let speed = START_SPEED;
+  let gameOver = true;
+  let score = 0;
+
+  let outputArr = gridArr; //main game array
+  let staticPieces = []; // array for collision checking
+  let shapeDisplay = []; //preview display
+  let playShapes = [] //Stores all current pieces
 
   const rnd = x => {
     return Math.round(Math.random() * (x - 1));
   }
 
+  //Get next shape with out repition
   const getNextShape = (retShape = {}) => {
     const hat = shapes.filter(e => e.name != retShape.name)
     return hat[rnd(hat.length)]
   }
-  const firstShape = getNextShape()
-  let playShapes = [firstShape ,getNextShape(firstShape)];
-
-  const moveSet = new Set([])
-
-  document.onkeydown = e => moveSet.add({direction: dirLookup[e.keyCode], rotation: rotLookup[e.keyCode]});
-  document.onkeyup = e => moveSet.delete({direction: dirLookup[e.keyCode], rotation: rotLookup[e.keyCode]});
-
 
   const clearRows = (shape) => {
-    let i = 0
     //Get the rows to check if full
     const rowsToCheck = [
       ...new Set(shape.cells.map(e => parseInt(e / board.width)))
     ];
-
-    // const tetrisRowCount = []
-
-    // rowsToCheck.forEach(row => {
-    //   const obj = {
-    //     row,
-    //     count: 0,
-    //     shapes:[]
-    //   }
-    //   tetrisRowCount[row] = obj
-    // })
-
-    // //go through each playshape
-    // playShapes.forEach(shape => {
-    //   //go through each cell
-    //   shape.cells.forEach(cell =>{
-    //     const row = parseInt(cell / board.width)
-    //     if(rowsToCheck.includes(row)){
-    //        tetrisRowCount[row].count++
-    //        tetrisRowCount[row].shapes.push(shape)
-    //     } 
-    //   })
-    // })
-
-    // console.log('tetrisRowCount',tetrisRowCount)
-
-    // const tetrisRowFilter = tetrisRowCount.filter(obj => obj.count === 10)
-
-   
-    // console.log('tetrisRowFilter',tetrisRowFilter)
-
-    // tetrisRowFilter.forEach(obj => {
-    //   const check = obj.row
-    //   obj.shapes.forEach(shape => {
-    //     const cells = shape.cells.reduce((acc, cell, cellIndex) => {
-    //       const cellRow = parseInt(cell / board.width);
-    //         // console.log(i++)
-    //         //If we are checking this row
-    //         if (check === cellRow) {
-    //           //Inc counter dont add to acc
-    //           // count++;
-    //         }else{
-    //           //Add to acc and move one row down
-    //           // const thing = cellRow < check ? cell + board.width : cell
-    //           acc.push(cell);
-    //           // newStaticPieces.push(thing);
-    //         }
-    //         return acc;
-    //     },[])
-    //     console.log([...shape.cells])
-    //     shape.cells = cells
-    //     console.log([...shape.cells])
-    //   })
-
-    // })
-
-    //  playShapes.forEach((shape,i) => {
-    //    if(i===0) return
-    //    console.log('shape.cells', shape.cells)
-    //   shape.cells = shape.cells.map(e => {
-    //     const len = tetrisRowFilter.length || 0
-    //     console.log('len',len, e , e+ (board.width * len))
-    //      return e+(board.width * len)
-    //   })
-    //  })
-    //if cell is in check add cell to list
-
-    //go through lists if 10 cells 
-
     rowsToCheck.forEach(check => {
       let count = 0;
       const newStaticPieces = [];
@@ -152,7 +88,7 @@
             //Inc counter dont add to acc
             count++;
           }else{
-            //Add to acc and move one row down
+            //If this row is above th row we are checking, move down
             const thing = cellRow < check ? e + board.width : e
             acc.push(thing);
             newStaticPieces.push(thing);
@@ -167,44 +103,12 @@
         playShapes = newPlayShapes;
         staticPieces = newStaticPieces;
         score += 10;
+        speed += 5
       }
     });
-    
-    // rowsToCheck.forEach(check => {
-    //   let count = 0;
-    //   const newStaticPieces = [];
-    //   //Create new potential playShapes
-    //   const newPlayShapes = playShapes.reduce((acc, shape, shapeIndex) => {
-    //     //For each shape in play shapes go thorough its cells
-    //     const cells = shape.cells.reduce((acc, e, cellIndex) => {
-    //       // Work out which row this cell is in
-    //       const cellRow = parseInt(e / board.width);
-    //       console.log(i++)
-    //       //If we are checking this row
-    //       if (check === cellRow) {
-    //         //Inc counter dont add to acc
-    //         count++;
-    //       }else{
-    //         //Add to acc and move one row down
-    //         const thing = cellRow < check ? e + board.width : e
-    //         acc.push(thing);
-    //         newStaticPieces.push(thing);
-    //       }
-    //       return acc;
-    //     }, []);
-    //     if(cells.length === 0)return acc;
-    //     return [...acc, { ...shape, cells }];
-    //   }, []);
-    //   //If we have found 10 cells on this row remove it
-    //   if (count === 10) {
-    //     playShapes = newPlayShapes;
-    //     staticPieces = newStaticPieces;
-    //     score += 10;
-    //   }
-    // });
   }
 
-  function addToStatic(shape) {
+  const addToStatic = (shape) => {
     staticPieces = [...staticPieces, ...shape.cells];
   }
 
@@ -212,11 +116,11 @@
     return staticPieces.some(e => e < board.width)
   };
 
-  function updateShapeOnGrid(arr, { color = 'hidden', cells = [] }) {
+  const updateShapeOnGrid = (arr, { color = 'hidden', cells = [] }) => {
     cells.forEach(index => (arr[index] = color));
   }
 
-  function updateGrid(shape) {
+  const updateGrid = (shape) => {
     //Copy blank grid
     const arr = [...gridArr]
     updateShapeOnGrid(arr, shape.shadow)
@@ -224,10 +128,10 @@
     playShapes.forEach((shape,i) => {
       updateShapeOnGrid(arr, shape);
     });
-  
     return arr;
   }
-  function updateShapes(){
+
+  const updateShapes = () => {
       const newShape = getNextShape(playShapes[0])
       playShapes.unshift(newShape)
       return playShapes[1];
@@ -244,15 +148,15 @@
     return updateShapes();
   }
 
-  function newGame() {
+  const newGame = () => {
     console.log("Start Game");
     cancelAnimationFrame(globalID);
     staticPieces = [];
-    // staticColour = [];
     gameOver = false;
     speed = START_SPEED;
     score = 0;
-    playShapes = [getNextShape(),getNextShape()];
+    playShapes = [getNextShape()]
+    updateShapes()
     makeMove({direction: DOWN, rotation: 0})
     outputArr = updateGrid(playShapes[1]);
     repeatOften();
@@ -266,7 +170,7 @@
   const isLeftGutter = e => isLessThan(3)(e % board.width)
   const isRightGutter = e => isGreaterThan(12)(e % board.width)
 
-  function shadowMaker(position, translateCells, isValidMove) {
+  const shadowMaker = (position, translateCells, isValidMove) => {
     let valid = true
     while(valid){  
       const newCells = translateCells(position += width)
@@ -282,11 +186,9 @@
     const cells = shape.layout[rotation]
     const translateCells = translateArray(cells)
     let position = shape.position + direction;
-    // if(shape.cells.length === 0 )position = shape.position 
 
     while (translateCells(position).some(isLeftGutter)) position++;
     while (translateCells(position).some(isRightGutter)) position--;
-
 
     const isInStatic = isInArr(staticPieces)
     const isValidMove = (potentialCells) => !(
@@ -298,31 +200,24 @@
     const valid = isValidMove(potentialCells, direction)
     if(!valid) return moveIsNotValid(shape, direction)
 
-    const shadowCells = shadowMaker(position, translateCells, isValidMove)
-
-    
     return {
       ...shape,
-      rotation,
       cells: potentialCells,
       position,
-      previous: {
-        cells: shape.cells,
-        color: 'black',
-      },
+      rotation,
       shadow: {
         ...shape.shadow,
-        cells: shadowCells,
+        cells: shadowMaker(position, translateCells, isValidMove),
       }
     };
   }
 
-  function makeMove({direction, rotation}){
+  const makeMove = ({direction, rotation}) => {
     playShapes[1] = movePieceWrapper(playShapes[1], direction, rotation)
     if (!gameOver) outputArr = updateGrid(playShapes[1]);
   }
 
-  function repeatOften() {
+  const repeatOften = () => {
     //update tick
     frameCounter++;
 
@@ -339,9 +234,13 @@
       moveSet.delete(e);
     });
 
-   if (!gameOver) globalID = requestAnimationFrame(repeatOften);
     //repeat
+   if (!gameOver) globalID = requestAnimationFrame(repeatOften);
   }
+
+  document.onkeydown = e => moveSet.add({direction: dirLookup[e.keyCode], rotation: rotLookup[e.keyCode]});
+  document.onkeyup = e => moveSet.delete({direction: dirLookup[e.keyCode], rotation: rotLookup[e.keyCode]});
+
 </script>
 
 <style>
@@ -352,16 +251,14 @@
     width: 100vw;
     color: white;
     justify-content: center;
-    /* align-items: center; */
   }
   #grid {
-    flex-basis: 330px; /*calc(30*18px);*/
+    flex-basis: 330px;
     display: flex;
     flex-wrap: wrap;
     overflow: hidden;
   }
   .side {
-    /* border: 1px solid pink; */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
