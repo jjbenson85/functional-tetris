@@ -67,44 +67,104 @@
     return hat[rnd(hat.length)]
   }
 
+  const indexToRow = e => parseInt(e / WIDTH)
+  const cellsToKeep = (arr,cell,check)=> {
+    // Work out which row this cell is in
+    const cellRow = indexToRow(cell);
+    if(cellRow === check) return arr
+    const newIndex = cellRow < check ? cell + WIDTH : cell
+    arr.push(newIndex);
+    return arr;
+  }
+
   const clearRows = (shape) => {
     //Get the rows to check if full
     const rowsToCheck = [
-      ...new Set(shape.cells.map(e => parseInt(e / WIDTH)))
-    ];
-    rowsToCheck.forEach(check => {
-      let count = 0;
-      const newStaticPieces = [];
+      ...new Set(shape.cells.map(indexToRow))
+    ]
+
+    const rowsToRemove = rowsToCheck.reduce((checkAcc, check)=>{
+      
+      const count = playShapes.reduce( (acc, shape) => {
+        shape.cells.forEach(cell => {
+           const cellRow = indexToRow(cell);
+           if (check === cellRow) acc++
+        })
+        return acc
+      }, 0)
+      console.log({count})
+      if(count===10) checkAcc.push(check)
+      return checkAcc
+    },[])
+
+    rowsToRemove.forEach(check => {
       //Create new potential playShapes
-      const newPlayShapes = playShapes.reduce((acc, shape, shapeIndex) => {
+       playShapes = playShapes.reduce((shapeAcc, shape) => {
         //For each shape in play shapes go thorough its cells
-        const cells = shape.cells.reduce((acc, e, cellIndex) => {
-          // Work out which row this cell is in
-          const cellRow = parseInt(e / WIDTH);
-          // console.log(i++)
-          //If we are checking this row
-          if (check === cellRow) {
-            //Inc counter dont add to acc
-            count++;
-          }else{
-            //If this row is above th row we are checking, move down
-            const thing = cellRow < check ? e + WIDTH : e
-            acc.push(thing);
-            newStaticPieces.push(thing);
-          }
-          return acc;
-        }, []);
-        if(cells.length === 0)return acc;
-        return [...acc, { ...shape, cells }];
+        const cells = shape.cells.reduce((cellAcc,cell)=>cellsToKeep(cellAcc,cell,check), []);
+        return [...shapeAcc, { ...shape, cells }];
       }, []);
-      //If we have found 10 cells on this row remove it
-      if (count === 10) {
-        playShapes = newPlayShapes;
-        staticPieces = newStaticPieces;
-        score += 10;
-        speed += 5
-      }
     });
+
+    // playShapes = playShapes.map(shape => buildBorders(shape.cells))
+    playShapes.forEach(shape =>{
+      shape.borders = buildBorders(shape.cells)
+    })
+
+  //Update score and speed
+    score += 10 * rowsToRemove.length
+    speed += 5 * rowsToRemove.length
+
+  //Update Static Pieces
+  staticPieces = playShapes.reduce((acc,shape)=>{
+    shape.cells.forEach(cell=>cell !== undefined && acc.push(cell))
+    return acc
+  },[])
+
+  console.log(staticPieces)
+
+    // rowsToCheck.forEach(check => {
+    //   let count = 0;
+    //   const newStaticPieces = [];
+    //   //Create new potential playShapes
+    //   const newPlayShapes = playShapes.reduce((acc, shape, shapeIndex) => {
+    //     //For each shape in play shapes go thorough its cells
+    //     const origLen = shape.cells.length
+    //     const cells = shape.cells.reduce((acc, e, cellIndex) => {
+    //       const cellsToKeep = (arr,cell,check,counter)=> {
+    //         // Work out which row this cell is in
+    //         const cellRow = indexToRow(cell);
+    //         //If we are checking this row
+    //         if (check === cellRow) {
+    //           counter++;
+    //         }else{
+    //           //If this row is above th row we are checking, move down
+    //           const newIndex = cellRow < check ? cell + WIDTH : cell
+    //           arr.push(newIndex);
+    //           newStaticPieces.push(newIndex);
+    //         }
+    //         return {arr, counter};
+    //       }
+    //       const {arr,counter} = cellsToKeep(acc,e,check,count)
+    //       acc = arr
+    //       count = counter
+    //       return arr
+
+    //     }, []);
+
+    //     console.log('Check', check, 'A-B',origLen-cells.length, ': Count',count)
+
+    //     if(cells.length === 0)return acc;
+    //     return [...acc, { ...shape, cells }];
+    //   }, []);
+    //   //If we have found 10 cells on this row remove it
+    //   if (count === 10) {
+    //     playShapes = newPlayShapes;
+    //     staticPieces = newStaticPieces;
+    //     score += 10;
+    //     speed += 5
+    //   }
+    // });
   }
 
   const addToStatic = (shape) => {
@@ -115,8 +175,12 @@
     return staticPieces.some(e => e < WIDTH)
   };
 
-  const updateShapeOnGrid = (arr, { color = 'hidden', cells = [] }) => {
-    cells.forEach(index => (arr[index] = color));
+  const updateShapeOnGrid = (arr, shape) => {
+    const { color = 'hidden', cells = [], borders = [], rotation } = shape
+    cells.forEach((index,i) => {
+      const classes = `${color} ${borders[i]}`
+      arr[index] = classes
+    });
   }
 
   const updateGrid = (shape) => {
@@ -178,6 +242,14 @@
     return translateCells(position -= WIDTH)
   }
 
+  const buildBorders = (cells) => cells.map((cell,i,arr) =>{
+      let str = ''
+      if(arr.includes(cell+RIGHT)) str+='R '
+      if(arr.includes(cell+LEFT)) str+='L '
+      if(arr.includes(cell+DOWN)) str+='D '
+      if(arr.includes(cell+UP)) str+='U '
+      return str
+    })
 
   const movePieceWrapper = (shape, direction = 0, rot = 0) => {
     // Update position
@@ -199,13 +271,22 @@
     const valid = isValidMove(potentialCells, direction)
     if(!valid) return moveIsNotValid(shape, direction)
 
+
+    
+    const borders = buildBorders(potentialCells)
+
+    console.log('borders', borders)
+
     return {
       ...shape,
       cells: potentialCells,
       position,
       rotation,
+      borders,
       shadow: {
         ...shape.shadow,
+        rotation,
+        borders,
         cells: shadowMaker(position, translateCells, isValidMove),
       }
     };
@@ -248,15 +329,21 @@
     display: flex;
     background: black;
     flex-grow: 1;
-    WIDTH: 100vw;
+    width: 100vw;
     color: white;
     justify-content: center;
   }
   #grid {
-    flex-basis: 330px;
+    flex-basis: 322px;
+    display: flex;
+    align-items: center;
+  }
+  #container{
     display: flex;
     flex-wrap: wrap;
-    overflow: hidden;
+    border: 1px solid white;
+    background-color: white;
+
   }
   .side {
     display: flex;
@@ -266,47 +353,92 @@
     padding: 30px;
   }
   .nextShape {
-    WIDTH: 128px;
+    width: 128px;
     display: flex;
     flex-wrap: wrap;
   }
   .cell {
-    WIDTH: 30px;
+    width: 30px;
     height: 30px;
-    border: 1px solid grey;
+    border: 1px solid black;
+    /* border-radius: 4px; */
   }
   .cell.none {
     border: 1px solid black;
   }
   .cell.white {
     background: white;
+    border: 1px solid white;
   }
   .cell.red {
     background: red;
+    border: 1px solid white;
   }
   .cell.yellow {
     background: yellow;
+    border: 1px solid white;
   }
   .cell.green {
     background: green;
+    border: 1px solid white;
   }
   .cell.orange {
     background: orange;
+    border: 1px solid white;
   }
   .cell.purple {
     background: purple;
+    border: 1px solid white;
   }
   .cell.cyan {
     background: cyan;
+    border: 1px solid white;
   }
   .cell.blue {
     background: blue;
+    border: 1px solid white;
   }
   .cell.black {
     background: black;
+    border: 1px solid #333;
+    border-radius: 0;
   }
   .cell.hidden {
     display: none;
+  }
+  .cell.shadow{
+    opacity: 0.4;
+    /* box-shadow: 0 0 50px white; */
+  }
+  .cell.U{
+     border-top: 0;
+     height: 31px;
+     border-top-left-radius: 0px;
+     border-top-right-radius: 0px;
+  }
+  .cell.D{ 
+    border-bottom: 0;
+    height: 31px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+  .cell.U.D{
+      height: 32px;
+  }
+  .cell.L{
+    border-left: 0;
+    width: 31px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+  .cell.R{ 
+    border-right: 0;
+    width: 31px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+  .cell.L.R{ 
+    width: 32px;
   }
 </style>
 
@@ -317,9 +449,11 @@
     <button on:click={newGame}>NEW GAME</button>
   </div>
   <div id="grid">
-    {#each outputArr as color, index}
-      <div class={`cell ${color}`} />
-    {/each}
+    <div id="container">
+      {#each outputArr as color, index}
+        <div class={`cell ${color}`} />
+      {/each}
+    </div>
   </div>
   <div class="side">
     <div>Score: {score}</div>
