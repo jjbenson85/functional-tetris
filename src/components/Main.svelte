@@ -33,11 +33,14 @@
     39: RIGHT
   };
   const moveSet = new Set([]) //Stores all current key presses
-  const gridArr = new Array(BOARD_CELLS)
+  const gridArr = new Array(BOARD_CELLS + (WIDTH*3))
     .fill()
     .map((e, i) =>
       i % WIDTH < L_GUTTER || i % WIDTH > R_GUTTER ? "hidden" : "black"
-    );
+    )
+    // .map((e, i) =>
+    //   i < WIDTH*3 ? "hidden" : e
+    // );
 
   /***
    * 
@@ -121,8 +124,6 @@
     return acc
   },[])
 
-  console.log(staticPieces)
-
     // rowsToCheck.forEach(check => {
     //   let count = 0;
     //   const newStaticPieces = [];
@@ -172,7 +173,7 @@
   }
 
   const checkEndGame = () => {
-    return staticPieces.some(e => e < WIDTH)
+    return staticPieces.some(e => e < 3*WIDTH)
   };
 
   const updateShapeOnGrid = (arr, shape) => {
@@ -229,7 +230,7 @@
   const isGreaterThan = (B) =>(A) => A > B
   const isLessThan = (B) =>(A) => A < B
   const isInArr = (B) => (A) => B.includes(A)
-  const isBottom = isGreaterThan(BOARD_CELLS)
+  const isBottom = isGreaterThan(gridArr.length)
   const isLeftGutter = e => isLessThan(L_GUTTER)(e % WIDTH)
   const isRightGutter = e => isGreaterThan(R_GUTTER)(e % WIDTH)
 
@@ -274,8 +275,6 @@
 
     
     const borders = buildBorders(potentialCells)
-
-    console.log('borders', borders)
 
     return {
       ...shape,
@@ -451,7 +450,9 @@
   <div id="grid">
     <div id="container">
       {#each outputArr as color, index}
-        <div class={`cell ${color}`} />
+        {#if index > WIDTH*3}
+          <div class={`cell ${color}`} />
+        {/if}
       {/each}
     </div>
   </div>
