@@ -11,6 +11,11 @@
     START_SPEED,
     L_GUTTER,
     R_GUTTER,
+    TOP_GUTTER,
+    rotLookup,
+    dirLookup,
+    moveSet,
+    gridArr,
   } from "../constants";
   import {
    shapes
@@ -21,26 +26,7 @@
    * CONSTANTS
    * 
    * ***/
-  const rotLookup = {
-    32: CLOCK,
-    90: CLOCK,
-    88: ANTICLOCK, 
-  };
-  const dirLookup = {
-    38: UP,
-    40: DOWN,
-    37: LEFT,
-    39: RIGHT
-  };
-  const moveSet = new Set([]) //Stores all current key presses
-  const gridArr = new Array(BOARD_CELLS + (WIDTH*3))
-    .fill()
-    .map((e, i) =>
-      i % WIDTH < L_GUTTER || i % WIDTH > R_GUTTER ? "hidden" : "black"
-    )
-    // .map((e, i) =>
-    //   i < WIDTH*3 ? "hidden" : e
-    // );
+  
 
   /***
    * 
@@ -95,7 +81,6 @@
         })
         return acc
       }, 0)
-      console.log({count})
       if(count===10) checkAcc.push(check)
       return checkAcc
     },[])
@@ -208,6 +193,7 @@
 
     clearRows(shape);
     gameOver = checkEndGame()
+   
     //Promote next shape
     return updateShapes();
   }
@@ -248,7 +234,7 @@
       if(arr.includes(cell+RIGHT)) str+='R '
       if(arr.includes(cell+LEFT)) str+='L '
       if(arr.includes(cell+DOWN)) str+='D '
-      if(arr.includes(cell+UP)) str+='U '
+      if(cell+UP > TOP_GUTTER && arr.includes(cell+UP)) str+='U '
       return str
     })
 
@@ -275,6 +261,8 @@
 
     
     const borders = buildBorders(potentialCells)
+    const shadowCells = shadowMaker(position, translateCells, isValidMove)
+    const shadowBorders = buildBorders(shadowCells)
 
     return {
       ...shape,
@@ -284,16 +272,15 @@
       borders,
       shadow: {
         ...shape.shadow,
-        rotation,
-        borders,
-        cells: shadowMaker(position, translateCells, isValidMove),
+        borders: shadowBorders,
+        cells: shadowCells,
       }
     };
   }
 
   const makeMove = ({direction, rotation}) => {
     playShapes[1] = movePieceWrapper(playShapes[1], direction, rotation)
-    if (!gameOver) outputArr = updateGrid(playShapes[1]);
+    outputArr = updateGrid(playShapes[1]);
   }
 
   const repeatOften = () => {
@@ -333,7 +320,6 @@
     justify-content: center;
   }
   #grid {
-    flex-basis: 322px;
     display: flex;
     align-items: center;
   }
@@ -341,10 +327,13 @@
     display: flex;
     flex-wrap: wrap;
     border: 1px solid white;
-    background-color: white;
-
+    background-color: black;
+    box-sizing: border-box;
+    width: 300px;
+    height: 601px;
   }
   .side {
+    min-width: 50px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -355,16 +344,23 @@
     width: 128px;
     display: flex;
     flex-wrap: wrap;
+    width: 120px;
+    height: 120px;
+    justify-content: center;
+    align-items: center;
+  }
+  .nextShape .cell {
+    width: 25%;
+    height: 25%;
   }
   .cell {
-    width: 30px;
-    height: 30px;
-    border: 1px solid black;
-    /* border-radius: 4px; */
-  }
-  .cell.none {
+    width: 10%;
+    height: 5%;
     border: 1px solid black;
   }
+  /* .cell.none {
+    background: black;
+  } */
   .cell.white {
     background: white;
     border: 1px solid white;
@@ -407,37 +403,36 @@
   }
   .cell.shadow{
     opacity: 0.4;
-    /* box-shadow: 0 0 50px white; */
   }
   .cell.U{
      border-top: 0;
-     height: 31px;
+     /* height: 31px; */
      border-top-left-radius: 0px;
      border-top-right-radius: 0px;
   }
   .cell.D{ 
     border-bottom: 0;
-    height: 31px;
+    /* height: 31px; */
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
   }
   .cell.U.D{
-      height: 32px;
+      /* height: 32px; */
   }
   .cell.L{
     border-left: 0;
-    width: 31px;
+    /* width: 31px; */
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;
   }
   .cell.R{ 
     border-right: 0;
-    width: 31px;
+    /* width: 31px; */
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
   }
   .cell.L.R{ 
-    width: 32px;
+    /* width: 32px; */
   }
 </style>
 
@@ -450,7 +445,7 @@
   <div id="grid">
     <div id="container">
       {#each outputArr as color, index}
-        {#if index > WIDTH*3}
+        {#if index > TOP_GUTTER}
           <div class={`cell ${color}`} />
         {/if}
       {/each}
@@ -461,9 +456,9 @@
     <div class="nextShape">
       {#if !gameOver}
         {#each playShapes[0].preview as color, index}
-          {#if index % WIDTH < 4}
+         
             <div class={`cell ${color}`} />
-          {/if}
+
         {/each}
       {/if}
     </div>

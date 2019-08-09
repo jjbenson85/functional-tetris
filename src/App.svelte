@@ -7,8 +7,9 @@
 
 <style>
 	:global(body) {
-
 		padding: 0;
+	}
+	:global(*) {
 		box-sizing: border-box;
 	}
 	#main-container {
